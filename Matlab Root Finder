@@ -1,125 +1,115 @@
-function untitled3
-    % Cute Pastel UI with Sidebar, Card, and Tabbed Results
-    pastelBg = [0 0 0]; % black background
-    pastelSidebar = [0.93 0.89 0.98]; % lighter purple
-    pastelCard = [0.96 0.97 1.00]; % baby blue
-    pastelButton = [1.00 0.80 0.89]; % pink
-    pastelButton2 = [0.80 0.93 1.00]; % blue
-    pastelButton3 = [1.00 0.95 0.80]; % yellow
-    pastelReset = [1.00 0.80 0.80]; % soft red
-    pastelText = [0.40 0.20 0.40]; % deep purple
-    fontName = 'Comic Sans MS';
-    fig = uifigure('Name','Numerical Method','Position',[100 100 950 600],'Color',pastelBg);
+    function untitled3
+    % Create UI with Sidebar
+    fig = uifigure('Name','Numerical Method','Position',[100 100 800 500]);
+    
+    % Sidebar panel (wider for bigger dropdown)
+    sidebar = uipanel(fig, 'Title', 'Methods', 'Position', [1 1 240 500]);
 
-    % Sidebar (cute, pastel)
-    % Note: Rounded corners and shadow are not supported in MATLAB uipanel
-    sidebar = uipanel(fig, 'Title', '', 'Position', [1 1 240 600], ...
-        'BackgroundColor', pastelSidebar, 'BorderType', 'none');
-    sidebarGrid = uigridlayout(sidebar, [8, 1], ...
-        'RowHeight', {50, 40, 50, 50, 30, 50, 50, '1x'}, ...
-        'ColumnWidth', {'1x'}, 'Padding', [18 18 18 18]);
+    % Use a grid layout inside the sidebar for automatic spacing
+    sidebarGrid = uigridlayout(sidebar, [5, 1], ...
+        'RowHeight', {40, 50, 40, 40, '1x'}, ... % label, dropdown, instructions, reset, filler
+        'ColumnWidth', {'1x'}, ...
+        'Padding', [10 10 10 10]);
 
-    % Sidebar: Title
-    uilabel(sidebarGrid, 'Text', 'Methods', 'FontSize', 26, 'FontWeight', 'bold', ...
-        'FontColor', pastelText, 'HorizontalAlignment', 'left', 'FontName', fontName);
-    % Sidebar: Method Dropdown
+    % Add label
+    uilabel(sidebarGrid, 'Text', 'Select Method:', 'FontSize', 18, 'HorizontalAlignment', 'left');
+
+    % Add dropdown
     methodNames = {'Graphical','Bisection','Secant','Newton-Raphson','Regula Falsi','Incremental'};
     methodDropdown = uidropdown(sidebarGrid, ...
-        'Items', methodNames, 'FontSize', 20, 'FontWeight', 'bold', ...
-        'Value', methodNames{1}, 'Tooltip','Choose a root-finding method', ...
-        'BackgroundColor', pastelCard, 'FontColor', pastelText, ...
-        'ValueChangedFcn', @(src, event)selectMethod(src.Value), ...
-        'FontName', fontName); % No CornerRadius in MATLAB
-    % Sidebar: Spacer
-    uilabel(sidebarGrid, 'Text', '', 'FontSize', 1);
-    % Sidebar: Instructions Button
-    instructionsBtn = uibutton(sidebarGrid, 'Text', 'Instructions', 'FontSize', 20, ...
-        'FontWeight', 'bold', 'BackgroundColor', pastelButton3, 'FontColor', pastelText, ...
-        'Tooltip', 'Show instructions', 'ButtonPushedFcn', @(src, event)buttonFlash(src, @()showInstructions()), ...
-        'FontName', fontName); % No CornerRadius in MATLAB
-    % Sidebar: Reset Button
-    resetBtn = uibutton(sidebarGrid, 'Text', 'Reset', 'FontSize', 20, ...
-        'FontWeight', 'bold', 'BackgroundColor', pastelReset, 'FontColor', pastelText, ...
-        'Tooltip', 'Reset all fields', 'ButtonPushedFcn', @(src, event)buttonFlash(src, @()resetApp()), ...
-        'FontName', fontName); % No CornerRadius in MATLAB
-    % Sidebar: Spacer
-    uilabel(sidebarGrid, 'Text', '', 'FontSize', 1);
-    % Sidebar: Filler
-    uilabel(sidebarGrid, 'Text', '', 'FontSize', 1);
+        'Items', methodNames, ...
+        'FontSize', 18, ...
+        'Value', methodNames{1}, ...
+        'ValueChangedFcn', @(src, event)selectMethod(src.Value));
+    methodDropdown.FontWeight = 'bold';
 
-    % Main Card Panel (cute, pastel)
-    % Note: Rounded corners and shadow are not supported in MATLAB uipanel
-    card = uipanel(fig, 'Title', '', 'Position', [260 420 670 120], ...
-        'BackgroundColor', pastelCard, ...
-        'BorderType', 'line', ...
-        'HighlightColor', pastelButton2);
-    cardGrid = uigridlayout(card, [2, 4], ...
-        'RowHeight', {44, 44}, ...
-        'ColumnWidth', {260, 120, 120, 120}, ...
-        'Padding', [18 18 18 18], ...
-        'ColumnSpacing', 18, ...
-        'RowSpacing', 10);
-    % First row: Equation input and Run button
-    eqEdit = uieditfield(cardGrid, 'text', 'FontSize', 18, 'Value', 'x^3-x-2', ...
-        'Placeholder', 'Enter equation, e.g. x^3-x-2', ...
-        'BackgroundColor', pastelSidebar, 'FontColor', pastelText, ...
-        'HorizontalAlignment', 'left', 'FontName', fontName); % No CornerRadius
-    eqEdit.Layout.Row = 1; eqEdit.Layout.Column = [1 3];
-    runBtn = uibutton(cardGrid, 'Text', 'Run', 'FontSize', 20, 'FontWeight', 'bold', ...
-        'BackgroundColor', pastelButton, 'FontColor', pastelText, ...
-        'Tooltip', 'Run selected method', ...
-        'ButtonPushedFcn', @(src, event)runMethod(), ...
-        'FontName', fontName); % No CornerRadius
-    runBtn.Layout.Row = 1; runBtn.Layout.Column = 4;
-    % Second row: Lower, Upper, Step fields
-    lowerEdit = uieditfield(cardGrid, 'numeric', 'FontSize', 16, 'Value', 0.1, ...
-        'Placeholder', 'Lower', ...
-        'Limits', [-Inf Inf], 'BackgroundColor', pastelSidebar, 'FontColor', pastelText, 'FontName', fontName); % No CornerRadius
-    lowerEdit.Layout.Row = 2; lowerEdit.Layout.Column = 2;
-    upperEdit = uieditfield(cardGrid, 'numeric', 'FontSize', 16, 'Value', 10, ...
-        'Placeholder', 'Upper', ...
-        'Limits', [-Inf Inf], 'BackgroundColor', pastelSidebar, 'FontColor', pastelText, 'FontName', fontName); % No CornerRadius
-    upperEdit.Layout.Row = 2; upperEdit.Layout.Column = 3;
-    stepEdit = uieditfield(cardGrid, 'numeric', 'FontSize', 16, 'Value', 0.01, ...
-        'Placeholder', 'Step', ...
-        'Limits', [eps Inf], 'BackgroundColor', pastelSidebar, 'FontColor', pastelText, 'FontName', fontName); % No CornerRadius
-    stepEdit.Layout.Row = 2; stepEdit.Layout.Column = 4;
-    % Add a blank label for alignment in the first column of the second row
-    blankLbl = uilabel(cardGrid, 'Text', '', 'FontSize', 1, 'BackgroundColor', pastelCard, 'FontColor', pastelCard);
-    blankLbl.Layout.Row = 2;
-    blankLbl.Layout.Column = 1;
+    % Add Instructions button
+    instructionsBtn = uibutton(sidebarGrid, ...
+        'Text', 'Instructions', ...
+        'FontSize', 16);
+    instructionsBtn.BackgroundColor = [1 0.5 0]; % Orange
+    instructionsBtn.FontColor = [0 0 0];         % Black
+    instructionsBtn.FontWeight = 'bold';            % Bold
+    instructionsBtn.ButtonPushedFcn = @(src, event)buttonFlash(src, @()showInstructions());
 
-    % Tab Group for Results (cute tabs)
-    tabg = uitabgroup(fig, 'Position', [260 10 670 400]);
-    tab1 = uitab(tabg, 'Title', 'Graph');
-    tab2 = uitab(tabg, 'Title', 'Table');
-    % Axes in Graph Tab
-    ax = uiaxes(tab1, 'Position', [30 60 600 300], 'BackgroundColor', pastelCard);
-    ax.XColor = pastelText; ax.YColor = pastelText;
-    ax.XLabel.Color = pastelText; ax.YLabel.Color = pastelText;
-    ax.Title.Color = pastelText;
-    ax.FontName = fontName;
-    % Result label above axes
-    resultLbl = uilabel(tab1, 'Text', 'Result: ', 'Position', [30 20 600 30], 'FontSize', 18, 'FontColor', pastelText, 'FontName', fontName);
-    % Table in Table Tab
-    table = uitable(tab2, 'Position', [30 20 600 350], ...
-        'ColumnName', {'Iteration', 'x0', 'x1', 'f(x0)', 'f(x1)', 'x2', 'Remark'}, ...
-        'Data', {}, ...
-        'FontSize', 15, ...
-        'BackgroundColor', [0.15 0.15 0.15], ...
-        'ColumnWidth', {'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'}, ...
-        'RowName', {}, ...
-        'ColumnEditable', false, ...
-        'RowStriping', 'on', ...
-        'FontWeight', 'bold', ...
-        'FontName', fontName, ...
-        'CellEditCallback', []);
-    tab2.BackgroundColor = [0.15 0.15 0.15];
+    % Add Reset button
+    resetBtn = uibutton(sidebarGrid, ...
+        'Text', 'Reset', ...
+        'FontSize', 16);
+    resetBtn.BackgroundColor = [1 0 0]; % Red
+    resetBtn.FontColor = [0 0 0];        % Black
+    resetBtn.FontWeight = 'bold';         % Bold
+    resetBtn.ButtonPushedFcn = @(src, event)buttonFlash(src, @()resetApp());
+
+    % Add Show Variables button
+    showVarsBtn = uibutton(sidebarGrid, ...
+        'Text', 'Show Variables', ...
+        'FontSize', 16, ...
+        'ButtonPushedFcn', @(src, event)showVariables());
+
+    % Add Save Session button
+    saveSessionBtn = uibutton(sidebarGrid, ...
+        'Text', 'Save Session', ...
+        'FontSize', 16, ...
+        'ButtonPushedFcn', @(src, event)toggleDiary());
+
+    % Add Plot Example button
+    plotExampleBtn = uibutton(sidebarGrid, ...
+        'Text', 'Plot Example', ...
+        'FontSize', 16, ...
+        'ButtonPushedFcn', @(src, event)plotExample());
+
+    % Main area UI elements (shifted right, bigger)
+    eqEdit = uieditfield(fig, 'text', ...
+        'Position', [270 450 440 44], ...   % much wider and taller, shifted right
+        'FontSize', 20, ...
+        'Value', 'x^3-x-2');
+    
+    % Lower limit input
+    lowerEdit = uieditfield(fig, 'numeric', ...
+        'Position', [270 400 130 36], ...
+        'FontSize', 16, ...
+        'Value', 0.1, ...
+        'Limits', [-Inf Inf], ...
+        'LowerLimitInclusive', 'on', ...
+        'UpperLimitInclusive', 'on', ...
+        'Placeholder', 'Lower Limit');
+
+    % Upper limit input
+    upperEdit = uieditfield(fig, 'numeric', ...
+        'Position', [420 400 130 36], ...
+        'FontSize', 16, ...
+        'Value', 10, ...
+        'Limits', [-Inf Inf], ...
+        'LowerLimitInclusive', 'on', ...
+        'UpperLimitInclusive', 'on', ...
+        'Placeholder', 'Upper Limit');
+
+    % Step size input
+    stepEdit = uieditfield(fig, 'numeric', ...
+        'Position', [570 400 140 36], ...
+        'FontSize', 16, ...
+        'Value', 0.01, ...
+        'Limits', [eps Inf], ...
+        'LowerLimitInclusive', 'on', ...
+        'UpperLimitInclusive', 'on', ...
+        'Placeholder', 'Step Size');
+
+    runBtn = uibutton(fig, 'Text', 'Run', ...
+        'Position', [730 450 100 44], ...   % bigger button, shifted right
+        'FontSize', 20, ...
+        'ButtonPushedFcn', @(src, event)runMethod());
+    ax = uiaxes(fig,'Position',[270 200 600 220]);
+    resultLbl = uilabel(fig,'Text','Result: ','Position',[270 170 600 30],'FontSize',16);
+    table = uitable(fig, ...
+        'Position', [270 10 600 180], ...   % x, y, width, height
+        'ColumnName', {}, ...
+        'Data', {});
 
     % Default interval and settings
     tol = 1e-10; max_iter = 200;
-    x = sym('x');
-    method = 'Graphical';
+    x = sym('x'); % <-- Define symbolic variable here
+    method = 'Graphical'; % Default method
 
     % Remove dropdown, add sidebar logic
     function selectMethod(selectedMethod)
@@ -212,8 +202,8 @@ function untitled3
             case 'Graphical'
                 zero_crossings = find(yvals(1:end-1).*yvals(2:end) < 0);
                 roots_approx = (xvals(zero_crossings) + xvals(zero_crossings+1))/2;
-                table.ColumnName = {'Approximate Root(s)', 'f(x)'};
-                table.Data = [num2cell(roots_approx'), num2cell(arrayfun(f, roots_approx'))];
+                table.ColumnName = {'Approximate Root(s)'};
+                table.Data = num2cell(roots_approx');
                 if isempty(roots_approx)
                     resultLbl.Text = 'No root detected visually in interval.';
                 else
@@ -228,16 +218,8 @@ function untitled3
                 [root, its] = bisection_method(f,a,b,tol,max_iter);
                 table.ColumnName = {'Iteration', 'a', '\u0394x', 'b', 'f(a)', 'f(b)', 'f(a)*f(b)', 'Remark'};
                 if ~isempty(its)
-                    % Format numbers to 6 decimal places for readability
-                    for i = 1:size(its,1)
-                        for j = 2:7 % Columns with numbers
-                            if isnumeric(its{i,j}) && ~isnan(its{i,j})
-                                its{i,j} = sprintf('%.6f', its{i,j});
-                            end
-                        end
-                    end
                     for k = 1:size(its,1)
-                        x1 = str2double(its{k,2}); xu = str2double(its{k,4});
+                        x1 = its{k,2}; xu = its{k,4};
                         if k == 1
                             plot(ax, [x1 xu], [0 0], 'bo-', 'LineWidth', 1.5, 'DisplayName', 'Interval');
                         else
@@ -252,16 +234,8 @@ function untitled3
                 [root, its] = secant_method(f,a,b,tol,max_iter);
                 table.ColumnName = {'Iteration', 'x0', 'x1', 'f(x0)', 'f(x1)', 'x2', 'Remark'};
                 if ~isempty(its)
-                    % Format numbers to 6 decimal places for readability
-                    for i = 1:size(its,1)
-                        for j = 2:6 % Columns with numbers
-                            if isnumeric(its{i,j}) && ~isnan(its{i,j})
-                                its{i,j} = sprintf('%.6f', its{i,j});
-                            end
-                        end
-                    end
-                    x0s = cellfun(@str2double, its(:,2));
-                    x1s = cellfun(@str2double, its(:,3));
+                    x0s = cell2mat(its(:,2));
+                    x1s = cell2mat(its(:,3));
                     if ~isempty(x0s)
                         scatter(ax, x0s, f(x0s), 60, 'b', 'filled', 'DisplayName', 'x0');
                     end
@@ -269,8 +243,8 @@ function untitled3
                         scatter(ax, x1s, f(x1s), 60, 'g', 'filled', 'DisplayName', 'x1');
                     end
                     for k = 1:size(its,1)
-                        x0_sec = str2double(its{k,2}); x1_sec = str2double(its{k,3});
-                        f0_sec = str2double(its{k,4}); f1_sec = str2double(its{k,5});
+                        x0_sec = its{k,2}; x1_sec = its{k,3};
+                        f0_sec = its{k,4}; f1_sec = its{k,5};
                         if k == 1
                             plot(ax, [x0_sec x1_sec], [f0_sec f1_sec], 'Color', [0.2 0.8 0.2], 'LineWidth', 1.5, 'DisplayName', 'Secant');
                         else
@@ -287,20 +261,12 @@ function untitled3
                     [root, its] = newton_raphson_method(f,df,(a+b)/2,tol,max_iter);
                     table.ColumnName = {'Iteration', 'x0', 'f(x0)', 'df(x0)', 'x1', 'Remark'};
                     if ~isempty(its)
-                        % Format numbers to 6 decimal places for readability
-                        for i = 1:size(its,1)
-                            for j = 2:5 % Columns with numbers
-                                if isnumeric(its{i,j}) && ~isnan(its{i,j})
-                                    its{i,j} = sprintf('%.6f', its{i,j});
-                                end
-                            end
-                        end
-                        x0s = cellfun(@str2double, its(:,2));
+                        x0s = cell2mat(its(:,2));
                         if ~isempty(x0s)
                             scatter(ax, x0s, f(x0s), 60, 'b', 'filled', 'DisplayName', 'x0');
                         end
                         for k = 1:size(its,1)
-                            x0n = str2double(its{k,2}); fx0n = str2double(its{k,3}); dfx0n = str2double(its{k,4});
+                            x0n = its{k,2}; fx0n = its{k,3}; dfx0n = its{k,4};
                             tangent_x = linspace(x0n-1, x0n+1, 10);
                             tangent_y = fx0n + dfx0n*(tangent_x-x0n);
                             if k == 1
@@ -321,16 +287,8 @@ function untitled3
                 [root, its] = regula_falsi_method(f,a,b,tol,max_iter);
                 table.ColumnName = {'Iteration', 'a', '\u0394x', 'b', 'f(a)', 'f(b)', 'f(a)*f(b)', 'Remark'};
                 if ~isempty(its)
-                    % Format numbers to 6 decimal places for readability
-                    for i = 1:size(its,1)
-                        for j = 2:7 % Columns with numbers
-                            if isnumeric(its{i,j}) && ~isnan(its{i,j})
-                                its{i,j} = sprintf('%.6f', its{i,j});
-                            end
-                        end
-                    end
                     for k = 1:size(its,1)
-                        x1 = str2double(its{k,2}); xu = str2double(its{k,4});
+                        x1 = its{k,2}; xu = its{k,4};
                         if k == 1
                             plot(ax, [x1 xu], [0 0], 'mo-', 'LineWidth', 1.5, 'DisplayName', 'Interval');
                         else
@@ -345,26 +303,12 @@ function untitled3
                 [root, its] = incremental_search_method(f, a, b, tol, max_iter);
                 table.ColumnName = {'Iteration', 'x0', 'x1', 'f(x0)', 'f(x1)', 'Remark'};
                 if ~isempty(its)
-                    % Format numbers to 6 decimal places for readability
-                    for i = 1:size(its,1)
-                        for j = 2:5 % Columns with numbers
-                            if isnumeric(its{i,j}) && ~isnan(its{i,j})
-                                its{i,j} = sprintf('%.6f', its{i,j});
-                            end
-                        end
-                    end
-                    x0s = cellfun(@str2double, its(:,2));
-                    x1s = cellfun(@str2double, its(:,3));
+                    x0s = cell2mat(its(:,2));
+                    x1s = cell2mat(its(:,3));
                     scatter(ax, x0s, f(x0s), 60, 'b', 'filled', 'DisplayName', 'x0');
                     scatter(ax, x1s, f(x1s), 60, 'g', 'filled', 'DisplayName', 'x1');
                     for k = 1:size(its,1)
-                        x1 = double(its{k,2});
-                        x2 = double(its{k,3});
-                        y1 = double(its{k,4});
-                        y2 = double(its{k,5});
-                        if all(isfinite([x1 x2 y1 y2])) && numel([x1 x2]) == 2 && numel([y1 y2]) == 2
-                            plot(ax, [x1 x2], [y1 y2], 'c-', 'LineWidth', 1.5, 'HandleVisibility','off');
-                        end
+                        plot(ax, [its{k,2} its{k,3}], [its{k,4} its{k,5}], 'c-', 'LineWidth', 1.5, 'HandleVisibility','off');
                     end
                 end
                 if ~isnan(root)
@@ -393,8 +337,8 @@ function untitled3
     function resetApp()
         eqEdit.Value = 'x^3-x-2';
         methodDropdown.Value = methodNames{1};
-        cla(ax, 'reset');
-        hold(ax, 'off');
+        cla(ax, 'reset'); % Fully reset the axes
+        hold(ax, 'off');  % Release any hold state
         table.Data = {};
         resultLbl.Text = 'Result: ';
     end
@@ -405,7 +349,7 @@ function untitled3
             '1. Enter your function f(x) in the input box at the top.\n', ...
             '2. Select a root-finding method from the dropdown.\n', ...
             '3. Click ''Run'' to compute and visualize the root.\n', ...
-            '4. Switch between Graph and Table tabs for results.\n', ...
+            '4. The table below the graph shows iteration details.\n', ...
             '5. Click ''Reset'' to clear and start over.' ...
         ]);
         uialert(fig, msg, 'Instructions');
@@ -413,9 +357,10 @@ function untitled3
 
     function buttonFlash(btn, callback)
         origColor = btn.BackgroundColor;
-        btn.BackgroundColor = [0.2 0.6 1];
+        btn.BackgroundColor = [0.2 0.6 1]; % Flash to blue
         t = timer('StartDelay', 0.15, 'TimerFcn', @(~,~)resetColor());
         start(t);
+
         function resetColor()
             btn.BackgroundColor = origColor;
             delete(t);
@@ -423,8 +368,142 @@ function untitled3
         end
     end
 
-    % --- Hover animation logic can be adapted if desired ---
-    % (Omitted for brevity, but can be re-added for buttons if needed)
+    % --- At the top of your main function, after creating the buttons ---
+    instructionsOrigPos = instructionsBtn.Position;
+    instructionsOrigFont = instructionsBtn.FontSize;
+    resetOrigPos = resetBtn.Position;
+    resetOrigFont = resetBtn.FontSize;
+    instructionsHovered = false;
+    resetHovered = false;
+    
+    % Animation timers for smooth hover
+    instructionsAnimTimer = [];
+    resetAnimTimer = [];
+    
+    fig.WindowButtonMotionFcn = @onMouseMove;
+
+    function onMouseMove(~,~)
+        mouse = fig.CurrentPoint;
+        % Instructions button hover
+        btnPos = instructionsOrigPos;
+        if mouse(1) >= btnPos(1) && mouse(1) <= btnPos(1)+btnPos(3) && ...
+           mouse(2) >= btnPos(2) && mouse(2) <= btnPos(2)+btnPos(4)
+            if ~instructionsHovered
+                animateButtonSize(instructionsBtn, instructionsOrigPos, instructionsOrigFont, 1.15, 'in', 'instructions');
+                instructionsHovered = true;
+            end
+        else
+            if instructionsHovered
+                animateButtonSize(instructionsBtn, instructionsOrigPos, instructionsOrigFont, 1.0, 'out', 'instructions');
+                instructionsHovered = false;
+            end
+        end
+        % Reset button hover
+        btnPos = resetOrigPos;
+        if mouse(1) >= btnPos(1) && mouse(1) <= btnPos(1)+btnPos(3) && ...
+           mouse(2) >= btnPos(2) && mouse(2) <= btnPos(2)+btnPos(4)
+            if ~resetHovered
+                animateButtonSize(resetBtn, resetOrigPos, resetOrigFont, 1.15, 'in', 'reset');
+                resetHovered = true;
+            end
+        else
+            if resetHovered
+                animateButtonSize(resetBtn, resetOrigPos, resetOrigFont, 1.0, 'out', 'reset');
+                resetHovered = false;
+            end
+        end
+    end
+
+    function animateButtonSize(btn, origPos, origFont, targetScale, direction, which)
+        % which: 'instructions' or 'reset'
+        % direction: 'in' (grow) or 'out' (shrink)
+        steps = 16; % Increased from 8 for smoother animation
+        duration = 0.15; % Slightly longer for smoothness
+        interval = duration / steps;
+        if strcmp(which, 'instructions')
+            if ~isempty(instructionsAnimTimer) && isvalid(instructionsAnimTimer)
+                stop(instructionsAnimTimer);
+                delete(instructionsAnimTimer);
+            end
+        else
+            if ~isempty(resetAnimTimer) && isvalid(resetAnimTimer)
+                stop(resetAnimTimer);
+                delete(resetAnimTimer);
+            end
+        end
+        % Get current scale
+        curPos = btn.Position;
+        curFont = btn.FontSize;
+        origCenter = [origPos(1)+origPos(3)/2, origPos(2)+origPos(4)/2];
+        curScale = curPos(3)/origPos(3); % width scale
+        % Compute scale steps
+        scaleDiff = targetScale - curScale;
+        scaleSteps = linspace(curScale, targetScale, steps+1);
+        fontSteps = linspace(curFont, origFont*targetScale, steps+1);
+        stepIdx = 2;
+        function doStep(~,~)
+            if stepIdx > length(scaleSteps)
+                if strcmp(which, 'instructions')
+                    instructionsAnimTimer = [];
+                else
+                    resetAnimTimer = [];
+                end
+                return;
+            end
+            scale = scaleSteps(stepIdx);
+            font = fontSteps(stepIdx);
+            newPos = [origCenter(1)-origPos(3)*scale/2, origCenter(2)-origPos(4)*scale/2, origPos(3)*scale, origPos(4)*scale];
+            btn.Position = newPos;
+            btn.FontSize = font;
+            stepIdx = stepIdx + 1;
+        end
+        t = timer('ExecutionMode','fixedSpacing','Period',interval,'TasksToExecute',steps,'TimerFcn',@doStep);
+        if strcmp(which, 'instructions')
+            instructionsAnimTimer = t;
+        else
+            resetAnimTimer = t;
+        end
+        start(t);
+    end
+
+    function showVariables()
+        vars = evalin('base', 'whos');
+        if isempty(vars)
+            msg = 'No variables in workspace.';
+        else
+            msg = sprintf('%-15s %-10s %-10s\n', 'Name', 'Size', 'Class');
+            for k = 1:length(vars)
+                msg = [msg, sprintf('%-15s %-10s %-10s\n', vars(k).name, mat2str(vars(k).size), vars(k).class)];
+            end
+        end
+        uialert(fig, msg, 'Workspace Variables');
+    end
+
+    function toggleDiary()
+        persistent diaryOn
+        if isempty(diaryOn) || ~diaryOn
+            [file, path] = uiputfile('session_diary.txt', 'Save Diary As');
+            if isequal(file,0)
+                return;
+            end
+            diary(fullfile(path, file));
+            diaryOn = true;
+            uialert(fig, 'Diary started. All commands/results will be saved.', 'Diary On');
+        else
+            diary off;
+            diaryOn = false;
+            uialert(fig, 'Diary stopped.', 'Diary Off');
+        end
+    end
+
+    function plotExample()
+        t = (0:0.05:5)';
+        y = -0.45 + 0.56*t + 2.34*t.^2 + 5.6*t.^3 + 9.45*t.^4 + 24.59*t.^5;
+        plot(ax, t, y, 'o-');
+        ax.Title.String = 'Example Plot: Polynomial';
+        ax.XLabel.String = 't';
+        ax.YLabel.String = 'y';
+    end
 end
 
 function eq = preprocess_equation(eq)
